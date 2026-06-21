@@ -524,9 +524,19 @@ function mvFolder(id,dir,e){e.stopPropagation();const i=S.folders.findIndex(f=>f
 function delFolder(id,e){
   e.stopPropagation();
   const cnt=S.memos.filter(m=>m.folder===id).length;
-  if(cnt>0&&!confirm(`이 폴더 안에 메모 ${cnt}개가 있어요.\n폴더와 메모를 모두 삭제할까요?`))return;
-  S.folders=S.folders.filter(f=>f.id!==id);S.memos=S.memos.filter(m=>m.folder!==id);
-  if(S.currentFolder===id)S.currentFolder=null;save();renderFolders();renderMain();
+  const fname=(S.folders.find(f=>f.id===id)||{}).name||'폴더';
+  document.getElementById('toastMsg').textContent=cnt>0?'"'+fname+'" 폴더와 메모 '+cnt+'개를 삭제할까요?':'"'+fname+'" 폴더를 삭제할까요?';
+  document.getElementById('toastCancel').style.display='';
+  document.getElementById('toastDel').style.display='';
+  document.getElementById('toast').classList.add('show');
+  clearTimeout(toastTimer);toastTimer=setTimeout(hideToast,4000);
+  document.getElementById('toastDel').onclick=()=>{
+    S.folders=S.folders.filter(f=>f.id!==id);
+    S.memos=S.memos.filter(m=>m.folder!==id);
+    if(S.currentFolder===id)S.currentFolder=null;
+    save();hideToast();renderFolders();renderMain();
+    document.getElementById('toastDel').onclick=()=>{if(!pendingDelId)return;S.memos=S.memos.filter(m=>m.id!==pendingDelId);save();hideToast();renderMain();};
+  };
 }
 function toggleFolderEdit(){S.folderEdit=!S.folderEdit;document.getElementById('btnFolderEdit').classList.toggle('active-btn',S.folderEdit);renderFolders();}
 function selFolder(id){S.currentFolder=['all','star'].includes(id)?id==='all'?null:'star':id;S.view='list';closeSB();renderAll();}
